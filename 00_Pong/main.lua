@@ -3,38 +3,53 @@ push = require 'push'
 tick = require 'tick'
 
 require 'Ball'
+require 'Messages'
 require 'Paddle'
+require 'Scores'
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 450
+WINDOW_WIDTH = 1280
+WINDOW_HEIGHT = 720
+
+FRAMERATE_LIMIT = 60
 
 VIRTUAL_WIDTH = WINDOW_WIDTH / 2.5
 VIRTUAL_HEIGHT = WINDOW_HEIGHT / 2.5
+VIRTUAL_WIDTH_CENTER = VIRTUAL_WIDTH / 2
+VIRTUAL_HEIGHT_CENTER = VIRTUAL_HEIGHT / 2
 
+-- Fonts sizes.
 SMALL_FONT_SIZE = 8
 LARGE_FONT_SIZE = 16
 SCORE_FONT_SIZE = 32
 
+PADDLE_WIDTH = 5
+PADDLE_HEIGHT = 20
+-- Maximum paddle speed.
 PADDLE_SPEED = 200
-SCORES_TO_WIN = 3
+-- Initial paddle offsets. Used for initialization.
+PADDLE1_X_OFFSET = 10
+PADDLE1_Y_OFFSET = 30
+PADDLE2_X_OFFSET = VIRTUAL_WIDTH - 15
+PADDLE2_Y_OFFSET = VIRTUAL_HEIGHT - 50
 
+BALL_WIDTH = 4
+BALL_HEIGHT = 4
+-- Initial ball speed. Used for initialization and reset ball state.
+INITIAL_BALL_SPEED = 200
+BALL_ACCELERATION_FACTOR = 1.05
+
+SCORES_TO_WIN = 10
+
+--[[
+    Game load stage.
+]]
 function love.load()
-    tick.framerate = 60
+    tick.framerate = FRAMERATE_LIMIT
 
     love.graphics.setDefaultFilter('nearest', 'nearest')
     love.window.setTitle('Pong')
 
     math.randomseed(os.time())
-
-    smallFont = love.graphics.newFont('font.ttf', SMALL_FONT_SIZE)
-    largeFont = love.graphics.newFont('font.ttf', LARGE_FONT_SIZE)
-    scoreFont = love.graphics.newFont('font.ttf', SCORE_FONT_SIZE)
-
-    sounds = {
-        ['paddle_hit'] = love.audio.newSource('sounds/paddle_hit.wav', 'static'),
-        ['score'] = love.audio.newSource('sounds/score.wav', 'static'),
-        ['wall_hit'] = love.audio.newSource('sounds/wall_hit.wav', 'static')
-    }
 
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
@@ -42,54 +57,41 @@ function love.load()
         vsync = true
     })
 
-    player1Score = 0
-    player2Score = 0
+    messages = Messages()
+    scores = Scores()
 
-    servingPlayer = 1
+    player1 = Paddle(PADDLE1_X_OFFSET, PADDLE1_Y_OFFSET, PADDLE_WIDTH, PADDLE_HEIGHT)
+    player2 = Paddle(PADDLE2_X_OFFSET, PADDLE2_Y_OFFSET, PADDLE_WIDTH, PADDLE_HEIGHT)
 
-    player1 = Paddle(10, 30, 5, 20)
-    player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
-
-    ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
+    local ballX = VIRTUAL_WIDTH_CENTER - BALL_WIDTH / 2
+    local ballY = VIRTUAL_HEIGHT_CENTER - BALL_HEIGHT / 2
+    ball = Ball(ballX, ballY, BALL_WIDTH, BALL_HEIGHT)
 
     gameState = 'start'
 end
 
+--[[
+    Handler for window resize.
+]]
 function love.resize(w, h)
     push:resize(w, h)
 end
 
+--[[
+    Game update stage.
+]]
 function love.update(dt)
-    if ball.x < 0 then
-        servingPlayer = 1
-        player2Score = player2Score + 1
+    scores:update(ball)
 
-        if player2Score == SCORES_TO_WIN then
-            winningPlayer = 2
-            gameState = 'done'
-        else
-            gameState = 'serve'
-        end
-
-        ball:reset()
-        sounds.score:play()
+    -- Checks the status of the winning. Changes game state if needed.
+    if scores:isAnyPlayerWin(ball) then
+        gameState = 'serve'
+    end
+    if scores:isGameDone() then
+        gameState = 'done'
     end
 
-    if ball.x > VIRTUAL_WIDTH then
-        servingPlayer = 2
-        player1Score = player1Score + 1
-
-        if player1Score == SCORES_TO_WIN then
-            winningPlayer = 1
-            gameState = 'done'
-        else
-            gameState = 'serve'
-        end
-
-        ball:reset()
-        sounds.score:play()
-    end
-
+    -- Handles player 1 keys (left paddle).
     if love.keyboard.isDown('w') then
         player1.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('s') then
@@ -98,6 +100,7 @@ function love.update(dt)
         player1.dy = 0
     end
 
+    -- Handles player 2 keys (right paddle).
     if love.keyboard.isDown('up') then
         player2.dy = -PADDLE_SPEED
     elseif love.keyboard.isDown('down') then
@@ -106,60 +109,24 @@ function love.update(dt)
         player2.dy = 0
     end
 
+    -- Updates ball position.
     if gameState == 'serve' then
-        ball.dy = math.random(-50, 50)
-        if servingPlayer == 1 then
-            ball.dx = math.random(140, 200)
-        else
-            ball.dx = -math.random(140, 200)
-        end
+        local direction = scores.servingPlayer == 1 and 'right' or 'left'
+        ball:resetAndSetDirection(direction)
+    elseif gameState == 'done' then
+        ball:reset()
     elseif gameState == 'play' then
-        if ball:collides(player1) then
-            ball.dx = -ball.dx * 1.03
-            ball.x = player1.x + 5
-            ball.dy = ball.dy * 1.03
-
-            -- if ball.dy < 0 then
-            --     ball.dy = -math.random(10, 150)
-            -- else
-            --     ball.dy = math.random(10, 150)
-            -- end
-            sounds.paddle_hit:play()
-        end
-
-        if ball:collides(player2) then
-            ball.dx = -ball.dx * 1.03
-            ball.x = player2.x - 4
-            ball.dy = -ball.dy * 1.03
-            -- if ball.dy < 0 then
-            --     ball.dy = -math.random(10, 150)
-            -- else
-            --     ball.dy = math.random(10, 150)
-            -- end
-            sounds.paddle_hit:play()
-        end
-
-        if ball.y <= 0 then
-            ball.y = 0
-            ball.dy = -ball.dy
-
-            sounds.wall_hit:play()
-        end
-
-        if ball.y >= VIRTUAL_HEIGHT - 4 then
-            ball.y = VIRTUAL_HEIGHT - 4
-            ball.dy = -ball.dy
-
-            sounds.wall_hit:play()
-        end
-
-        ball:update(dt)
+        ball:update(dt, player1, player2)
     end
 
+    -- Updates paddles positions.
     player1:update(dt)
     player2:update(dt)
 end
 
+--[[
+    Keypress handler.
+]]
 function love.keypressed(key)
     if key == 'escape' then
         love.event.quit()
@@ -171,69 +138,48 @@ function love.keypressed(key)
         elseif gameState == 'done' then
             gameState = 'serve'
 
-            ball:reset()
-
-            player1Score = 0
-            player2Score = 0
-
-            servingPlayer = winningPlayer == 1 and  2 or 1
+            scores:reset()
         end
     end
 end
 
+--[[
+    Game draw (render) stage.
+]]
 function love.draw()
     push:apply('start')
 
+    -- Cleans the screen with some sort of grey color.
     love.graphics.clear(0.1569, 0.1765, 0.2039, 1)
 
-    displayScore()
-
-    love.graphics.setFont(smallFont)
+    -- Displays information.
     if gameState == 'start' then
-        love.graphics.printf('Welcome to Pong!', 0, 10, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press Enter to begin!', 0, 20, VIRTUAL_WIDTH, 'center')
+        messages:showStartMessage()
     elseif gameState == 'serve' then
-        love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!", 0, 10, VIRTUAL_WIDTH, 'center')
-        love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
+        scores:render()
+        messages:showServeMessage(tostring(scores.servingPlayer))
     elseif gameState == 'done' then
-        love.graphics.setFont(largeFont)
-        love.graphics.printf('Player ' .. tostring(winningPlayer) .. " wins!", 0, 10, VIRTUAL_WIDTH, 'center')
-
-        love.graphics.setFont(smallFont)
-        love.graphics.printf('Press Enter to restart', 0, 30, VIRTUAL_WIDTH, 'center')
+        scores:render()
+        messages:showWinnerMessage(tostring(scores.winningPlayer))
     elseif gameState == 'play' then
+        scores:render()
     end
 
+    -- Render ball and paddles.
     player1:render()
     player2:render()
     ball:render()
 
-    displayFPS()
-    displayBallVelocity(ball)
+    --showDebugInfo()
 
     push:apply('end')
 end
 
-function displayScore()
-    love.graphics.setFont(scoreFont)
-    love.graphics.print(tostring(player1Score), VIRTUAL_WIDTH / 2 - 50, VIRTUAL_HEIGHT / 3)
-    love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
-end
-
-function displayFPS()
-    setFontForDisplayInfo()
-    love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
-end
-
-function displayBallVelocity(ball)
-    setFontForDisplayInfo()
-    love.graphics.print(
-        'Ball velocity (' .. tostring(ball.dx) .. ' : ' .. tostring(ball.dy) .. ')',
-        10,
-        10 + SMALL_FONT_SIZE)
-end
-
-function setFontForDisplayInfo()
-    love.graphics.setFont(smallFont)
-    love.graphics.setColor(0, 1, 0, 1)
+--[[
+    Show debug information:
+    FPS and current ball velocity.
+]]
+function showDebugInfo()
+    messages:showFPS()
+    messages:showBallVelocity(ball)
 end
