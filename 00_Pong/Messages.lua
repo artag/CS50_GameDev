@@ -14,6 +14,9 @@ function Messages:init()
     self.firstRow = VIRTUAL_HEIGHT * 0.1
     self.secondRow = VIRTUAL_HEIGHT * 0.2
     self.thirdRow = VIRTUAL_HEIGHT * 0.3
+    self.forthRow = VIRTUAL_HEIGHT * 0.4
+    self.fifthRow = VIRTUAL_HEIGHT * 0.5
+    self.sixthRow = VIRTUAL_HEIGHT * 0.6
 end
 
 --[[
@@ -22,7 +25,37 @@ end
 function Messages:showStartMessage()
     love.graphics.setFont(self.small_font)
     love.graphics.printf('Welcome to Pong!', 0, self.firstRow, VIRTUAL_WIDTH, 'center')
-    love.graphics.printf('Press Enter to begin!', 0, self.secondRow, VIRTUAL_WIDTH, 'center')
+    love.graphics.printf(
+        'Press Enter to begin!\n' ..
+        'Press 1 to select player 1.\n' ..
+        'Press 2 to select player 2.\n',
+        0, self.secondRow, VIRTUAL_WIDTH, 'center')
+end
+
+function Messages:showPlayer1Message(ai)
+    love.graphics.setFont(self.small_font)
+
+    if ai.enabled then
+        love.graphics.printf('Player 1: Computer', 0, self.forthRow, VIRTUAL_WIDTH, 'center')
+    else
+        love.graphics.printf(
+            "Player 1: Human.\n" ..
+            "Keys to control: w, s",
+            0, self.forthRow, VIRTUAL_WIDTH, 'center')
+    end
+end
+
+function Messages:showPlayer2Message(ai)
+    love.graphics.setFont(self.small_font)
+
+    if ai.enabled then
+        love.graphics.printf('Player 2: Computer', 0, self.fifthRow, VIRTUAL_WIDTH, 'center')
+    else
+        love.graphics.printf(
+            "Player 2: Human.\n" ..
+            "Keys to control: up, down",
+            0, self.fifthRow, VIRTUAL_WIDTH, 'center')
+    end
 end
 
 --[[

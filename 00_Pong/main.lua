@@ -2,6 +2,7 @@ class = require 'class'
 push = require 'push'
 tick = require 'tick'
 
+require 'AI'
 require 'Ball'
 require 'Messages'
 require 'Paddle'
@@ -67,6 +68,11 @@ function love.load()
     local ballY = VIRTUAL_HEIGHT_CENTER - BALL_HEIGHT / 2
     ball = Ball(ballX, ballY, BALL_WIDTH, BALL_HEIGHT)
 
+    ai1Paddle = Paddle(PADDLE1_X_OFFSET, PADDLE1_Y_OFFSET, PADDLE_WIDTH, PADDLE_HEIGHT)
+    ai2Paddle = Paddle(PADDLE2_X_OFFSET, PADDLE2_Y_OFFSET, PADDLE_WIDTH, PADDLE_HEIGHT)
+    ai1 = AI(ball, ai1Paddle)
+    ai2 = AI(ball, ai2Paddle)
+
     gameState = 'start'
 end
 
@@ -91,22 +97,26 @@ function love.update(dt)
         gameState = 'done'
     end
 
-    -- Handles player 1 keys (left paddle).
-    if love.keyboard.isDown('w') then
-        player1.dy = -PADDLE_SPEED
-    elseif love.keyboard.isDown('s') then
-        player1.dy = PADDLE_SPEED
-    else
-        player1.dy = 0
+    -- Handles player 1 keys (left paddle). Works with disabled ai1.
+    if not ai1.enabled then
+        if love.keyboard.isDown('w') then
+            player1.dy = -PADDLE_SPEED
+        elseif love.keyboard.isDown('s') then
+            player1.dy = PADDLE_SPEED
+        else
+            player1.dy = 0
+        end
     end
 
-    -- Handles player 2 keys (right paddle).
-    if love.keyboard.isDown('up') then
-        player2.dy = -PADDLE_SPEED
-    elseif love.keyboard.isDown('down') then
-        player2.dy = PADDLE_SPEED
-    else
-        player2.dy = 0
+    -- Handles player 2 keys (right paddle). Works with disabled ai2.
+    if not ai2.enabled then
+        if love.keyboard.isDown('up') then
+            player2.dy = -PADDLE_SPEED
+        elseif love.keyboard.isDown('down') then
+            player2.dy = PADDLE_SPEED
+        else
+            player2.dy = 0
+        end
     end
 
     -- Updates ball position.
@@ -116,12 +126,29 @@ function love.update(dt)
     elseif gameState == 'done' then
         ball:reset()
     elseif gameState == 'play' then
-        ball:update(dt, player1, player2)
+        if ai1.enabled and not ai2.enabled then
+            ball:update(dt, ai1.paddle, player2)
+        elseif not ai1.enabled and ai2.enabled then
+            ball:update(dt, player1, ai2.paddle)
+        elseif ai1.enabled and ai2.enabled then
+            ball:update(dt, ai1.paddle, ai2.paddle)
+        else
+            ball:update(dt, player1, player2)
+        end
     end
 
     -- Updates paddles positions.
-    player1:update(dt)
-    player2:update(dt)
+    if ai1.enabled then
+        ai1:update(dt)
+    else
+        player1:update(dt)
+    end
+
+    if ai2.enabled then
+        ai2:update(dt)
+    else
+        player2:update(dt)
+    end
 end
 
 --[[
@@ -129,7 +156,13 @@ end
 ]]
 function love.keypressed(key)
     if key == 'escape' then
-        love.event.quit()
+        if gameState == 'start' then
+            love.event.quit()
+        else
+            gameState = 'start'
+            scores:reset()
+            ball:reset()
+        end
     elseif key == 'enter' or key == 'return' then
         if gameState == 'start' then
             gameState = 'serve'
@@ -140,6 +173,18 @@ function love.keypressed(key)
 
             scores:reset()
         end
+    elseif key == '1' then
+        if not gameState == 'start' then
+            return
+        end
+
+        ai1.enabled = not ai1.enabled
+    elseif key == '2' then
+        if not gameState == 'start' then
+            return
+        end
+
+        ai2.enabled = not ai2.enabled
     end
 end
 
@@ -155,6 +200,8 @@ function love.draw()
     -- Displays information.
     if gameState == 'start' then
         messages:showStartMessage()
+        messages:showPlayer1Message(ai1)
+        messages:showPlayer2Message(ai2)
     elseif gameState == 'serve' then
         scores:render()
         messages:showServeMessage(tostring(scores.servingPlayer))
@@ -165,9 +212,19 @@ function love.draw()
         scores:render()
     end
 
-    -- Render ball and paddles.
-    player1:render()
-    player2:render()
+    -- Render paddles.
+    if ai1.enabled then
+        ai1:render()
+    else
+        player1:render()
+    end
+    if ai2.enabled then
+        ai2:render()
+    else
+        player2:render()
+    end
+
+    -- Render ball
     ball:render()
 
     --showDebugInfo()

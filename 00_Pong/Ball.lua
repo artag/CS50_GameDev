@@ -11,6 +11,7 @@ function Ball:init(x, y, width, height)
     self.y = y
     self.width = width
     self.height = height
+    self:updateCenter()
 
     self.sounds = {
         ['paddle_hit'] = love.audio.newSource('sounds/paddle_hit.wav', 'static'),
@@ -33,6 +34,7 @@ function Ball:bounceFromLeftPaddle(paddle1)
     end
 
     self.x = paddle1.x + paddle1.width
+    self:updateCenter()
 
     self.dv = self.dv * BALL_ACCELERATION_FACTOR
     self:setRandomAngleHorizontalDirection('right')
@@ -48,6 +50,7 @@ function Ball:bounceFromRightPaddle(paddle2)
     end
 
     self.x = paddle2.x - self.width
+    self:updateCenter()
 
     self.dv = self.dv * BALL_ACCELERATION_FACTOR
     self:setRandomAngleHorizontalDirection('left')
@@ -78,6 +81,7 @@ end
 function Ball:reset()
     self.x = VIRTUAL_WIDTH_CENTER - self.width / 2
     self.y = VIRTUAL_HEIGHT_CENTER - self.height / 2
+    self:updateCenter()
 
     self.dv = INITIAL_BALL_SPEED
 
@@ -94,6 +98,7 @@ end
 function Ball:resetAndSetDirection(direction)
     self.x = VIRTUAL_WIDTH_CENTER - self.width / 2
     self.y = VIRTUAL_HEIGHT_CENTER - self.height / 2
+    self:updateCenter()
 
     self.dv = INITIAL_BALL_SPEED
 
@@ -118,6 +123,7 @@ function Ball:update(dt, paddle1, paddle2)
 
     self.x = self.x + self.dx * dt
     self.y = self.y + self.dy * dt
+    self:updateCenter()
 end
 
 --[[
@@ -176,6 +182,8 @@ function Ball:bounceFromTop()
     end
 
     self.y = 0
+    self:updateCenter()
+
     self.dy = -self.dy
     self.sounds.wall_hit:play()
 end
@@ -189,6 +197,16 @@ function Ball:bounceFromBottom()
     end
 
     self.y = VIRTUAL_HEIGHT - self.height
+    self:updateCenter()
+
     self.dy = -self.dy
     self.sounds.wall_hit:play()
+end
+
+--[[
+    Helper function. Calculate ball center.
+]]
+function Ball:updateCenter()
+    self.centerX = self.x + self.width / 2
+    self.centerY = self.y + self.height / 2
 end
