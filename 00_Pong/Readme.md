@@ -135,11 +135,23 @@ at least if update or draw are missing!
   `push:resize()` needs to be called here for our use case so that it can
    dynamically rescale its internal canvas to fit our new window dimensions.
 
+
 ## Links
 
 * https://love2d.org/wiki/Getting_Started
+
 * https://github.com/games50
+
 * https://www.bfxr.net (Simple sound-generating program)
+
+* https://howtomakeanrpg.com
+
+  How to Make an RPG, by Dan Schuller
+
+* http://gameprogrammingpatterns.com/
+
+  Game Programming Patterns, by Robert Nystrom
+
 
 ### Libs
 
