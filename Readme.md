@@ -44,7 +44,7 @@ at least if update or draw are missing!
 
 * `love.keypressed(key)`
 
-  -A LÖVE2D callback function that executes whenever we press a key,
+  -A LÖVE2D callback function that executes whenever we press a key.
 
 * `love.event.quit()`
 
@@ -135,6 +135,16 @@ at least if update or draw are missing!
   `push:resize()` needs to be called here for our use case so that it can
    dynamically rescale its internal canvas to fit our new window dimensions.
 
+* `love.graphics.newImage(path)`
+
+  -Loads an image from a graphics file (JPEG, PNG, GIF, etc.),
+  storing it in an object we can draw to the screen.
+
+* `love.mousepressed(x, y, button)`
+
+  -Callback fired by LÖVE2D every time a mouse button is pressed;
+  also gives us the (X, Y) of where the mouse cursor was at the time of the button press.
+
 
 ## Links
 
@@ -142,7 +152,9 @@ at least if update or draw are missing!
 
 * https://github.com/games50
 
-* https://www.bfxr.net (Simple sound-generating program)
+* https://www.bfxr.net
+
+  Simple sound-generating program
 
 * https://howtomakeanrpg.com
 
@@ -151,6 +163,10 @@ at least if update or draw are missing!
 * http://gameprogrammingpatterns.com/
 
   Game Programming Patterns, by Robert Nystrom
+
+* https://www.youtube.com/channel/UCHTnEwQKNwm49CQeCVZogMw
+
+  Shesez (Boundary Break). Various tricks in game development.
 
 
 ### Libs
