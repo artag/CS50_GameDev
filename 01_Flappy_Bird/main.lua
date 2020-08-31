@@ -18,6 +18,7 @@ require 'Scores'
 require 'StateMachine'
 require 'states/BaseState'
 require 'states/CountdownState'
+require 'states/PauseState'
 require 'states/PlayState'
 require 'states/ResetState'
 require 'states/ScoreState'
@@ -69,6 +70,7 @@ function love.load()
     gStateMachine = StateMachine {
         ['title'] = function() return TitleScreenState() end,
         ['countdown'] = function() return CountdownState() end,
+        ['pause'] = function() return PauseState() end,
         ['play'] = function() return PlayState(bird, pipePairs, spawnTimer, scores) end,
         ['reset'] = function() return ResetState(bird, pipePairs, spawnTimer, scores) end,
         ['score'] = function() return ScoreState(scores) end

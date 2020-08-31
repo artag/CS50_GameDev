@@ -25,6 +25,10 @@ function PlayState:update(dt)
     self.spawnTimer:update(dt)
     self.pipePairs:update(dt, self.bird.boundary)
     self.bird:update(dt)
+
+    if love.keyboard.wasPressed('p') or love.keyboard.wasPressed('pause') then
+        gStateMachine:change('pause')
+    end
 end
 
 --[[
