@@ -4,16 +4,12 @@
 ]]
 Timer = class{}
 
-local PIPE_CREATION_INTERVAL_SECONDS = 3
-
 --[[
     Constructor.
     Uses collection of pipe pairs (object of PipePairs class).
 ]]
 function Timer:init(pipes)
     self:reset()
-
-    self.timerInterval = PIPE_CREATION_INTERVAL_SECONDS
     self.pipes = pipes
 end
 
@@ -24,9 +20,11 @@ end
 function Timer:update(dt)
     self.value = self.value + dt
 
+    -- The timer down.
     if self.value > self.timerInterval then
         self.pipes:createPipe()
         self.value = 0
+        self.timerInterval = self:GetRandomTimeInterval()
     end
 end
 
@@ -35,4 +33,12 @@ end
 ]]
 function Timer:reset()
     self.value = 0
+    self.timerInterval = 0
+end
+
+--[[
+    Helper function. Returns random time interval.
+]]
+function Timer:GetRandomTimeInterval()
+    return 2.4 + math.random(0, 9) * 0.1
 end

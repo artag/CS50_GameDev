@@ -10,7 +10,7 @@ local PIPE_SPEED = -60
     Uses the object of Scores class.
 ]]
 function PipePair:init(scores)
-    local gapHeight = math.floor(7 * VIRTUAL_HEIGHT / 20)
+    local gapHeight = math.floor(math.random(5, 6) * VIRTUAL_HEIGHT / 20)
     local upperHeight = math.floor(9 * VIRTUAL_HEIGHT / 20)
     local lowerHeight = math.floor(17 * VIRTUAL_HEIGHT / 20)
 
